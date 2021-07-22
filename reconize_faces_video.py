@@ -6,6 +6,7 @@ import imutils
 import pickle
 import time
 import cv2
+from abc import ABC, abstractmethod
 
 
 def parse_arguments():
@@ -13,6 +14,8 @@ def parse_arguments():
     ap = argparse.ArgumentParser()
     ap.add_argument("-e", "--encodings", required=True,
                     help="path to serialized db of facial encodings")
+    ap.add_argument("-v", "--video-stream", action='store_true',
+                    help="Use the available video stream instead of video file")
     ap.add_argument("-o", "--output", type=str,
                     help="path to output video", default="")
     ap.add_argument("-y", "--display", action='store_true', help="whether or not to display output frame to screen")
@@ -20,6 +23,29 @@ def parse_arguments():
                     help="face detection model to use: either `hog` or `cnn`")
     return vars(ap.parse_args())
 
+
+class MediaSource(ABC):
+
+    @abstractmethod
+    def is_open(self) -> bool:
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
+
+
+class VideoFileSource(MediaSource):
+    def is_open(self) -> bool:
+        pass
+
+    def close(self):
+        pass
+
+    def __init__(self, file_path="test_videos/welcome_scene.mp4"):
+        self.cap = cv2.VideoCapture(file_path)
+
+    
 
 args = parse_arguments()
 
@@ -32,7 +58,8 @@ print("[INFO] starting video stream...")
 # vs = VideoStream(src=0).start()
 # writer = None
 # time.sleep(2.0)
-cap = cv2.VideoCapture("test_videos/welcome_scene.mp4")
+
+
 
 i = 0
 try:
@@ -57,8 +84,7 @@ try:
         for encoding in encodings:
             # attempt to match each face in the input image to our known
             # encodings
-            matches = face_recognition.compare_faces(data["encodings"],
-                                                     encoding)
+            matches = face_recognition.compare_faces(data["encodings"], encoding)
             name = "Unknown"
             # check to see if we have found a match
             if True in matches:
@@ -79,18 +105,18 @@ try:
 
             # update the list of names
             names.append(name)
-            # loop over the recognized faces
-            for ((top, right, bottom, left), name) in zip(boxes, names):
-                # rescale the face coordinates
-                top = int(top * r)
-                right = int(right * r)
-                bottom = int(bottom * r)
-                left = int(left * r)
-                # draw the predicted face name on the image
-                cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-                y = top - 15 if top - 15 > 15 else top + 15
-                cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (0, 255, 0), 2)
+        # loop over the recognized faces
+        for ((top, right, bottom, left), name) in zip(boxes, names):
+            # rescale the face coordinates
+            top = int(top * r)
+            right = int(right * r)
+            bottom = int(bottom * r)
+            left = int(left * r)
+            # draw the predicted face name on the image
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+            y = top - 15 if top - 15 > 15 else top + 15
+            cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.75, (0, 255, 0), 2)
 
         if args["display"]:
             cv2.imshow("Frame", frame)
