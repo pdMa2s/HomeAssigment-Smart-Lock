@@ -36,16 +36,14 @@ class MediaSource(ABC):
 
 
 class VideoFileSource(MediaSource):
-    def is_open(self) -> bool:
-        pass
-
-    def close(self):
-        pass
-
     def __init__(self, file_path="test_videos/welcome_scene.mp4"):
         self.cap = cv2.VideoCapture(file_path)
 
-    
+    def is_open(self) -> bool:
+        return self.cap.isOpened()
+
+    def close(self):
+        self.cap.release()
 
 args = parse_arguments()
 
@@ -59,12 +57,12 @@ print("[INFO] starting video stream...")
 # writer = None
 # time.sleep(2.0)
 
-
+video_source = VideoFileSource()
 
 i = 0
 try:
-    while cap.isOpened():
-        ret, frame = cap.read()
+    while video_source.is_open():
+        ret, frame = video_source.cap.read()
 
         # This condition prevents from infinte looping
         # incase video ends.
@@ -127,4 +125,4 @@ try:
 finally:
     # do a bit of cleanup
     cv2.destroyAllWindows()
-    cap.release()
+    video_source.close()
