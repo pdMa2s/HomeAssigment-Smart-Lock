@@ -1,12 +1,10 @@
 # import the necessary packages
-from imutils.video import VideoStream
 import face_recognition
 import argparse
 import imutils
 import pickle
-import time
 import cv2
-from abc import ABC, abstractmethod
+from utils.media_sources import VideoFileSource, VideoStreamSource
 
 
 def parse_arguments():
@@ -24,27 +22,6 @@ def parse_arguments():
     return vars(ap.parse_args())
 
 
-class MediaSource(ABC):
-
-    @abstractmethod
-    def is_open(self) -> bool:
-        pass
-
-    @abstractmethod
-    def close(self):
-        pass
-
-
-class VideoFileSource(MediaSource):
-    def __init__(self, file_path="test_videos/welcome_scene.mp4"):
-        self.cap = cv2.VideoCapture(file_path)
-
-    def is_open(self) -> bool:
-        return self.cap.isOpened()
-
-    def close(self):
-        self.cap.release()
-
 args = parse_arguments()
 
 # load the known faces and embeddings
@@ -53,20 +30,21 @@ data = pickle.loads(open(args["encodings"], "rb").read())
 # initialize the video stream and pointer to output video file, then
 # allow the camera sensor to warm up
 print("[INFO] starting video stream...")
-# vs = VideoStream(src=0).start()
 # writer = None
-# time.sleep(2.0)
 
-video_source = VideoFileSource()
+if args["video_stream"]:
+    video_source = VideoStreamSource()
+else:
+    video_source = VideoFileSource()
 
 i = 0
 try:
     while video_source.is_open():
-        ret, frame = video_source.cap.read()
+        frame = video_source.get_frame()
 
         # This condition prevents from infinte looping
         # incase video ends.
-        if not ret:
+        if video_source.is_stream_over():
             break
 
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
