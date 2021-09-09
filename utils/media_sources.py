@@ -24,7 +24,7 @@ class MediaSource(ABC):
 
 
 class VideoFileSource(MediaSource):
-    def __init__(self, file_path="test_videos/welcome_scene.mp4"):
+    def __init__(self, file_path: str):
         self.cap = cv2.VideoCapture(file_path)
         self.stream_over = False
 
