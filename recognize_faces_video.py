@@ -7,7 +7,7 @@ import cv2
 from utils.media_sources import VideoFileSource, VideoStreamSource
 from imutils.video import FPS
 
-detection_method_choices = ["hog", "cnn"]
+detection_method_choices = ["hog", "cnn", "haar"]
 
 
 def parse_arguments():
